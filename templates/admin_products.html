@@ -1,0 +1,28 @@
+{% extends "admin_dashboard.html" %}
+
+{% block content %}
+<h2>Products</h2>
+
+<a href="/admin/products/add" class="btn btn-success mb-3">Add New Product</a>
+
+<table class="table">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Price (UZS)</th>
+        <th>Actions</th>
+    </tr>
+
+    {% for p in products %}
+    <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.price }}</td>
+        <td>
+            <a href="/admin/products/edit/{{ p.id }}" class="btn btn-primary btn-sm">Edit</a>
+            <a href="/admin/products/delete/{{ p.id }}" class="btn btn-danger btn-sm">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

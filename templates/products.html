@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">Products</h2>
+
+<div class="row">
+    {% for p in products %}
+    <div class="col-md-3">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>{{ p.name }}</h5>
+                <h6>{{ "%.2f"|format(p.price) }} UZS</h6>
+                <a href="/add/{{ p.id }}" class="btn btn-success w-100 mt-3">Add to cart</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

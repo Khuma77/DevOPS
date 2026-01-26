@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Your Cart</h2>
+
+<table class="table">
+    <tr>
+        <th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th>
+    </tr>
+
+    {% for item in items %}
+    <tr>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.product.price }}</td>
+        <td>
+            <form action="/update/{{ item.product.id }}" method="POST" style="display:flex; gap:5px">
+                <input type="number" name="qty" value="{{ item.qty }}" min="1">
+                <button class="btn btn-secondary btn-sm">Update</button>
+            </form>
+        </td>
+        <td>{{ item.subtotal }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h4>Total: {{ total }}</h4>
+
+<a href="/checkout" class="btn btn-success">Checkout</a>
+
+{% endblock %}

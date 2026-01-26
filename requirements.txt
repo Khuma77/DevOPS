@@ -1,0 +1,9 @@
+flask
+prometheus-client
+flask-cors
+python-json-logger
+psutil
+gunicorn
+pytest
+pytest-cov
+flake8

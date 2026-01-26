@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Checkout</h2>
+
+<table class="table">
+    <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+
+    {% for item in items %}
+    <tr>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.qty }}</td>
+        <td>{{ item.product.price }}</td>
+        <td>{{ item.subtotal }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h4>Total: {{ total }}</h4>
+
+<form method="POST">
+    <input name="name" class="form-control mb-2" placeholder="Full name">
+    <input name="phone" class="form-control mb-2" placeholder="Phone">
+    <input name="address" class="form-control mb-3" placeholder="Address">
+
+    <button class="btn btn-success">Place order</button>
+</form>
+
+{% endblock %}
