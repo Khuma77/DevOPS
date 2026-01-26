@@ -1,4 +1,4 @@
-# 🌾 Agro Shop - Complete DevOps Platform with GitOps
+# Agro Shop - Complete DevOps Platform with GitOps
 
 ## 📌 Project Overview
 Agro Shop is a modern e-commerce platform for agricultural products, built with Flask and deployed using complete DevOps practices. The project demonstrates enterprise-level CI/CD pipelines, GitOps workflows with ArgoCD, comprehensive monitoring, and cloud-native deployment strategies.
@@ -65,6 +65,8 @@ graph TB
 - **Multi-environment management** - Separate configs for each environment
 - **Automated synchronization** - Git as single source of truth
 - **Rollback capabilities** - Easy revert to previous versions
+<img width="1129" height="518" alt="image" src="https://github.com/user-attachments/assets/50cbbe8b-1e3c-4ff4-904a-3158eff83539" />
+
 
 ### 📊 Monitoring & Observability
 - **Prometheus** - Metrics collection and alerting
@@ -94,9 +96,12 @@ graph TB
 - **GitHub Actions** - CI/CD automation
 - **GitHub Container Registry** - Docker image storage
 
+
 ## Monitoring & Observability
 - **Prometheus** - Metrics collection and alerting
+<img width="1220" height="726" alt="image" src="https://github.com/user-attachments/assets/ee1b32d0-a423-40bf-a754-472f8886f8a8" />
 - **Grafana** - Visualization and dashboards
+<img width="1229" height="750" alt="image" src="https://github.com/user-attachments/assets/219f055a-90cf-45e4-8645-0d2918b89c3b" />
 - **Loki** - Log aggregation and querying
 - **Promtail** - Log shipping agent
 
