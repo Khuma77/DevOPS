@@ -72,6 +72,11 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    # -------- Set lowercase repository owner --------
+    - name: Set lowercase repository owner
+      run: |
+        echo "REPO_OWNER_LOWER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
     # -------- Login to GitHub Container Registry --------
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
@@ -88,8 +93,8 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/agro-shop:dev-${{ github.sha }}
-          ghcr.io/${{ github.repository_owner }}/agro-shop:dev-latest
+          ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:dev-${{ github.sha }}
+          ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:dev-latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -101,8 +106,8 @@ jobs:
         file: ./Dockerfile.production
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}
-          ghcr.io/${{ github.repository_owner }}/agro-shop:prod-latest
+          ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}
+          ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -111,14 +116,15 @@ jobs:
       if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
       run: |
         # Update docker-compose files with new image tags
-        sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.yml
+        sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.yml
+        sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.ghcr.yml
         
         # Create deployment manifest if it doesn't exist
         mkdir -p deploy/k8s
         
         # Update Kubernetes deployment if exists
         if [ -f deploy/k8s/deployment.yaml ]; then
-          sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}|g" deploy/k8s/deployment.yaml
+          sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" deploy/k8s/deployment.yaml
         fi
 
     - name: Commit deployment changes
@@ -187,10 +193,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Set lowercase repository owner
+      run: |
+        echo "REPO_OWNER_LOWER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
     - name: Deploy to ${{ github.event.inputs.environment || 'dev' }}
       run: |
         echo "🚀 Deploying to ${{ github.event.inputs.environment || 'dev' }} environment"
-        echo "Image: ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}"
+        echo "Image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}"
         
         # Here you would add your actual deployment commands
         # For example:
@@ -216,6 +226,9 @@ jobs:
     if: always()
     
     steps:
+    - name: Set lowercase repository owner
+      run: |
+        echo "REPO_OWNER_LOWER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
     - name: Notify Success
       if: ${{ needs.build.result == 'success' && needs.trivy-scan.result == 'success' }}
       run: |
@@ -223,7 +236,7 @@ jobs:
         echo "🐳 Images built and pushed to GitHub Container Registry"
         echo "🔒 Security scan passed"
         echo "🚀 Deployment completed"
-        echo "📦 Images available at: ghcr.io/${{ github.repository_owner }}/agro-shop"
+        echo "📦 Images available at: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop"
 
     - name: Notify Failure
       if: ${{ needs.build.result == 'failure' || needs.trivy-scan.result == 'failure' }}
