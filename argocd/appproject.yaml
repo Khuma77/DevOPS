@@ -1,0 +1,106 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: agro-shop-project
+  namespace: argocd
+  labels:
+    project: agro-shop
+spec:
+  description: Agro Shop Project for GitOps deployment
+  
+  # Source repositories
+  sourceRepos:
+    - 'https://github.com/Khuma77/DevOPS.git'
+    - 'https://prometheus-community.github.io/helm-charts'
+    - 'https://grafana.github.io/helm-charts'
+  
+  # Destination clusters and namespaces
+  destinations:
+    - namespace: agro-shop
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+    - namespace: ingress-nginx
+      server: https://kubernetes.default.svc
+  
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+    - group: 'admissionregistration.k8s.io'
+      kind: MutatingWebhookConfiguration
+    - group: 'admissionregistration.k8s.io'
+      kind: ValidatingWebhookConfiguration
+  
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: 'apps'
+      kind: Deployment
+    - group: 'apps'
+      kind: StatefulSet
+    - group: 'apps'
+      kind: DaemonSet
+    - group: 'networking.k8s.io'
+      kind: Ingress
+    - group: 'networking.k8s.io'
+      kind: NetworkPolicy
+    - group: 'policy'
+      kind: PodDisruptionBudget
+    - group: 'autoscaling'
+      kind: HorizontalPodAutoscaler
+    - group: 'monitoring.coreos.com'
+      kind: ServiceMonitor
+    - group: 'monitoring.coreos.com'
+      kind: PrometheusRule
+  
+  # Roles for project members
+  roles:
+    - name: admin
+      description: Admin role for agro-shop project
+      policies:
+        - p, proj:agro-shop-project:admin, applications, *, agro-shop-project/*, allow
+        - p, proj:agro-shop-project:admin, repositories, *, *, allow
+        - p, proj:agro-shop-project:admin, clusters, *, *, allow
+      groups:
+        - agro-shop:admin
+    
+    - name: developer
+      description: Developer role for agro-shop project
+      policies:
+        - p, proj:agro-shop-project:developer, applications, get, agro-shop-project/*, allow
+        - p, proj:agro-shop-project:developer, applications, sync, agro-shop-project/*, allow
+        - p, proj:agro-shop-project:developer, repositories, get, *, allow
+      groups:
+        - agro-shop:developer
+  
+  # Sync windows
+  syncWindows:
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      applications:
+        - '*'
+      manualSync: true
+    - kind: deny
+      schedule: '0 2 * * *'
+      duration: 1h
+      applications:
+        - 'agro-shop'
+      manualSync: false
+      description: 'Maintenance window - no automatic syncs'

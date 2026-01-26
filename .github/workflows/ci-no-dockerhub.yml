@@ -119,6 +119,9 @@ jobs:
         sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.yml
         sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.ghcr.yml
         
+        # Update Helm values with new image tag
+        sed -i "s|tag: \".*\"|tag: \"prod-${{ github.sha }}\"|g" helm/agro-shop/values.yaml
+        
         # Create deployment manifest if it doesn't exist
         mkdir -p deploy/k8s
         
@@ -132,8 +135,8 @@ jobs:
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
-        git add docker-compose.yml deploy/ || true
-        git commit -m "chore: update image tags to ${{ github.sha }}" || echo "No changes to commit"
+        git add docker-compose.yml docker-compose.ghcr.yml helm/agro-shop/values.yaml deploy/ || true
+        git commit -m "chore: update image tags to prod-${{ github.sha }}" || echo "No changes to commit"
         git push || echo "No changes to push"
 
   # -------------------------------------------------------

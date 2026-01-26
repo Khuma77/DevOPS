@@ -1,0 +1,42 @@
+1. Get the application URL by running these commands:
+{{- if .Values.app.ingress.enabled }}
+{{- range $host := .Values.app.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.app.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.app.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.app.name }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.app.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ .Values.app.name }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.app.name }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.app.service.port }}
+{{- else if contains "ClusterIP" .Values.app.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Values.app.name }},release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. Monitor your application:
+{{- if .Values.grafana.enabled }}
+  - Grafana Dashboard: http{{ if .Values.app.ingress.tls }}s{{ end }}://grafana.{{ (index .Values.app.ingress.hosts 0).host }}
+  - Default credentials: admin / {{ .Values.grafana.adminPassword }}
+{{- end }}
+
+{{- if .Values.prometheus.enabled }}
+  - Prometheus: http{{ if .Values.app.ingress.tls }}s{{ end }}://prometheus.{{ (index .Values.app.ingress.hosts 0).host }}
+{{- end }}
+
+3. Check application health:
+  kubectl get pods -l app={{ .Values.app.name }}
+  kubectl logs -l app={{ .Values.app.name }}
+
+4. Scale your application:
+  kubectl scale deployment {{ .Values.app.name }} --replicas=3
+
+5. Update your application:
+  helm upgrade {{ .Release.Name }} ./helm/agro-shop --set app.image.tag=new-version

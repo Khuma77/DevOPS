@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: agro-shop-monitoring
+  namespace: argocd
+  labels:
+    app: agro-shop-monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Khuma77/DevOPS.git
+    targetRevision: HEAD
+    path: helm/agro-shop
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: app.enabled
+          value: "false"
+        - name: prometheus.enabled
+          value: "true"
+        - name: grafana.enabled
+          value: "true"
+        - name: loki.enabled
+          value: "true"
+        - name: promtail.enabled
+          value: "true"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10

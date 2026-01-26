@@ -1,0 +1,54 @@
+# Staging environment values
+app:
+  replicaCount: 2
+  image:
+    tag: "prod-latest"
+  
+  resources:
+    limits:
+      cpu: 300m
+      memory: 384Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  
+  ingress:
+    hosts:
+      - host: staging.agro-shop.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: agro-shop-staging-tls
+        hosts:
+          - staging.agro-shop.local
+  
+  env:
+    - name: FLASK_ENV
+      value: "staging"
+    - name: DATABASE_URL
+      value: "sqlite:///data/agro-staging.db"
+
+# Enable basic monitoring in staging
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      size: 5Gi
+
+grafana:
+  enabled: true
+  persistence:
+    size: 2Gi
+
+loki:
+  enabled: true
+  persistence:
+    size: 2Gi
+
+# Enable HPA with lower thresholds
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 60

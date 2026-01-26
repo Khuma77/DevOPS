@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: agro-shop-environments
+  namespace: argocd
+  labels:
+    app: agro-shop-applicationset
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: agro-shop-dev
+            domain: dev.agro-shop.local
+            replicas: "1"
+            resources_cpu: "100m"
+            resources_memory: "128Mi"
+          - env: staging
+            namespace: agro-shop-staging
+            domain: staging.agro-shop.local
+            replicas: "2"
+            resources_cpu: "200m"
+            resources_memory: "256Mi"
+          - env: prod
+            namespace: agro-shop-prod
+            domain: agro-shop.local
+            replicas: "3"
+            resources_cpu: "500m"
+            resources_memory: "512Mi"
+  template:
+    metadata:
+      name: 'agro-shop-{{env}}'
+      labels:
+        app: agro-shop
+        environment: '{{env}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: agro-shop-project
+      source:
+        repoURL: https://github.com/Khuma77/DevOPS.git
+        targetRevision: HEAD
+        path: helm/agro-shop
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-{{env}}.yaml
+          parameters:
+            - name: app.replicaCount
+              value: '{{replicas}}'
+            - name: app.ingress.hosts[0].host
+              value: '{{domain}}'
+            - name: app.resources.requests.cpu
+              value: '{{resources_cpu}}'
+            - name: app.resources.requests.memory
+              value: '{{resources_memory}}'
+            - name: app.image.tag
+              value: 'prod-latest'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      revisionHistoryLimit: 10

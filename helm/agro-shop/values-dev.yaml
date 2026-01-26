@@ -1,0 +1,51 @@
+# Development environment values
+app:
+  replicaCount: 1
+  image:
+    tag: "dev-latest"
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  ingress:
+    hosts:
+      - host: dev.agro-shop.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: agro-shop-dev-tls
+        hosts:
+          - dev.agro-shop.local
+  
+  env:
+    - name: FLASK_ENV
+      value: "development"
+    - name: FLASK_DEBUG
+      value: "1"
+    - name: DATABASE_URL
+      value: "sqlite:///data/agro-dev.db"
+
+# Disable monitoring in dev
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
+loki:
+  enabled: false
+
+# Disable HPA in dev
+hpa:
+  enabled: false
+
+# Smaller persistence in dev
+app:
+  persistence:
+    size: 500Mi

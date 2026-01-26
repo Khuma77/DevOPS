@@ -1,0 +1,74 @@
+# Production environment values
+app:
+  replicaCount: 3
+  image:
+    tag: "prod-latest"
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  ingress:
+    hosts:
+      - host: agro-shop.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: agro-shop-prod-tls
+        hosts:
+          - agro-shop.local
+  
+  env:
+    - name: FLASK_ENV
+      value: "production"
+    - name: DATABASE_URL
+      value: "sqlite:///data/agro-prod.db"
+
+# Full monitoring stack in production
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      size: 20Gi
+    retention: "30d"
+
+grafana:
+  enabled: true
+  persistence:
+    size: 10Gi
+
+loki:
+  enabled: true
+  persistence:
+    size: 10Gi
+
+promtail:
+  enabled: true
+
+# Production HPA settings
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Enable PDB in production
+pdb:
+  enabled: true
+  minAvailable: 2
+
+# Enable network policies in production
+networkPolicy:
+  enabled: true
+
+# Production persistence
+app:
+  persistence:
+    size: 5Gi
+    storageClass: "fast-ssd"
