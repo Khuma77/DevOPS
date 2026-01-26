@@ -11,7 +11,7 @@ app:
   name: agro-shop
   image:
     repository: ghcr.io/khuma77/agro-shop
-    tag: "prod-latest"
+    tag: "prod-99557df63a4c5e0d12af46b808701cb7611e16c0"
     pullPolicy: Always
   
   replicaCount: 2

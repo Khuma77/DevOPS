@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: agro-shop
-        image: ghcr.io/khuma77/agro-shop:prod-b16066ab70ca67cc396397bdc0841c3066febc6b
+        image: ghcr.io/khuma77/agro-shop:prod-99557df63a4c5e0d12af46b808701cb7611e16c0
         ports:
         - containerPort: 5000
         env:
