@@ -1,4 +1,4 @@
-name: Python Flask CI/CD (AgroShop)
+name: Python Flask CI/CD (AgroShop) - No Docker Hub
 
 on:
   workflow_dispatch:
@@ -16,12 +16,16 @@ on:
         default: false
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
 
 permissions:
   contents: write
   security-events: write
+  packages: write
 
 jobs:
   # -------------------------------------------------------
@@ -59,68 +63,66 @@ jobs:
         # Create test database
         python -c "from database import create_tables; create_tables()"
         # Run tests
-        pytest api_test.py -v --tb=short || echo "Tests completed"
+        pytest test_api.py -v --tb=short || echo "Tests completed"
 
     - name: Create logs directory
       run: mkdir -p logs
 
-    # -------- Docker login --------
-    - name: Login to Docker Hub
-      if: ${{ secrets.DOCKER_HUB_USERNAME && secrets.DOCKER_HUB_PASSWORD }}
-      run: |
-        echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | \
-        docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+    # -------- Docker Setup --------
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # -------- Login to GitHub Container Registry --------
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     # -------- Build & Push Development Image --------
     - name: Build & Push Development Image
-      if: ${{ secrets.DOCKER_HUB_USERNAME && secrets.DOCKER_HUB_PASSWORD }}
-      run: |
-        docker build \
-          -f Dockerfile \
-          -t ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:dev-${{ github.sha }} \
-          -t ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:dev-latest \
-          .
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:dev-${{ github.sha }}
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:dev-latest
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/agro-shop:dev-${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/agro-shop:dev-latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
     # -------- Build & Push Production Image --------
     - name: Build & Push Production Image
-      if: ${{ secrets.DOCKER_HUB_USERNAME && secrets.DOCKER_HUB_PASSWORD }}
-      run: |
-        docker build \
-          -f Dockerfile.production \
-          -t ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-${{ github.sha }} \
-          -t ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-latest \
-          .
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-${{ github.sha }}
-        docker push ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-latest
-
-    # -------- Alternative: Build without push if no credentials --------
-    - name: Build Images (No Push)
-      if: ${{ !secrets.DOCKER_HUB_USERNAME || !secrets.DOCKER_HUB_PASSWORD }}
-      run: |
-        echo "⚠️ Docker Hub credentials not found. Building images locally only."
-        docker build -f Dockerfile -t agro-shop:dev-${{ github.sha }} .
-        docker build -f Dockerfile.production -t agro-shop:prod-${{ github.sha }} .
-        echo "✅ Images built successfully (not pushed to registry)"
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.production
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/agro-shop:prod-latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
     # -------- GitOps: Update deployment files --------
     - name: Update deployment image tags
-      if: ${{ (github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main') && secrets.DOCKER_HUB_USERNAME }}
+      if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
       run: |
         # Update docker-compose files with new image tags
-        sed -i "s|image:.*agro-shop:.*|image: ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.yml
+        sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}|g" docker-compose.yml
         
         # Create deployment manifest if it doesn't exist
         mkdir -p deploy/k8s
         
         # Update Kubernetes deployment if exists
         if [ -f deploy/k8s/deployment.yaml ]; then
-          sed -i "s|image:.*agro-shop:.*|image: ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-${{ github.sha }}|g" deploy/k8s/deployment.yaml
+          sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}|g" deploy/k8s/deployment.yaml
         fi
 
     - name: Commit deployment changes
-      if: ${{ (github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main') && secrets.DOCKER_HUB_USERNAME }}
+      if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
@@ -179,7 +181,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [build, trivy-scan]
-    if: ${{ (github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main') && secrets.DOCKER_HUB_USERNAME }}
+    if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
     environment: ${{ github.event.inputs.environment || 'dev' }}
     
     steps:
@@ -188,7 +190,7 @@ jobs:
     - name: Deploy to ${{ github.event.inputs.environment || 'dev' }}
       run: |
         echo "🚀 Deploying to ${{ github.event.inputs.environment || 'dev' }} environment"
-        echo "Image: ${{ secrets.DOCKER_HUB_USERNAME }}/agro-shop:prod-${{ github.sha }}"
+        echo "Image: ghcr.io/${{ github.repository_owner }}/agro-shop:prod-${{ github.sha }}"
         
         # Here you would add your actual deployment commands
         # For example:
@@ -218,9 +220,10 @@ jobs:
       if: ${{ needs.build.result == 'success' && needs.trivy-scan.result == 'success' }}
       run: |
         echo "✅ Pipeline completed successfully!"
-        echo "🐳 Images built and pushed"
+        echo "🐳 Images built and pushed to GitHub Container Registry"
         echo "🔒 Security scan passed"
         echo "🚀 Deployment completed"
+        echo "📦 Images available at: ghcr.io/${{ github.repository_owner }}/agro-shop"
 
     - name: Notify Failure
       if: ${{ needs.build.result == 'failure' || needs.trivy-scan.result == 'failure' }}
