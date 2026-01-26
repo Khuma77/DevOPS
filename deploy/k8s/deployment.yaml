@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: agro-shop
-        image: your-dockerhub-username/agro-shop:prod-latest
+        image: ghcr.io/khuma77/agro-shop:prod-b16066ab70ca67cc396397bdc0841c3066febc6b
         ports:
         - containerPort: 5000
         env:
