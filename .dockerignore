@@ -60,5 +60,7 @@ README*.md
 *_test.py
 test_*.py
 
-# Monitoring configs (handled by docker-compose)
-monitoring/
+# Monitoring config files (keep Python modules)
+monitoring/*.yml
+monitoring/*.yaml
+monitoring/grafana/

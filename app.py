@@ -10,7 +10,15 @@ from logging_config import setup_logging, get_logger
 
 # Import API routes and monitoring
 from api.api_routes import api_bp
-from monitoring.metrics import metrics_bp
+
+# Try to import monitoring (optional)
+try:
+    from monitoring.metrics import metrics_bp
+    MONITORING_ENABLED = True
+except ImportError:
+    print("Warning: Monitoring module not found. Metrics endpoint will be disabled.")
+    metrics_bp = None
+    MONITORING_ENABLED = False
 
 # Admin Panels
 from admin.admin_controller import admin_bp
@@ -39,7 +47,8 @@ logger.info("Database tables created successfully")
 
 # Register blueprints
 app.register_blueprint(api_bp)
-app.register_blueprint(metrics_bp)
+if MONITORING_ENABLED and metrics_bp:
+    app.register_blueprint(metrics_bp)
 app.register_blueprint(admin_bp, name='admin_main')
 app.register_blueprint(admin_products_bp, name='admin_products_main')
 
