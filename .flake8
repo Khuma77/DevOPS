@@ -1,0 +1,84 @@
+[flake8]
+# Flake8 configuration for Agro Shop project
+
+# Maximum line length
+max-line-length = 127
+
+# Maximum complexity
+max-complexity = 10
+
+# Ignore specific error codes
+ignore = 
+    # E203: whitespace before ':'
+    E203,
+    # W503: line break before binary operator
+    W503,
+    # F401: imported but unused (for __init__.py files)
+    F401
+
+# Exclude directories and files
+exclude = 
+    # Virtual environments
+    venv/,
+    env/,
+    .venv/,
+    .env/,
+    # Build directories
+    build/,
+    dist/,
+    *.egg-info/,
+    # Cache directories
+    __pycache__/,
+    .pytest_cache/,
+    # Git
+    .git/,
+    # IDE
+    .vscode/,
+    .idea/,
+    # Database files
+    *.db,
+    # Log files
+    logs/,
+    *.log,
+    # Migration files (if using Flask-Migrate)
+    migrations/,
+    # Static files
+    static/,
+    # Templates
+    templates/,
+    # Monitoring configs
+    monitoring/,
+    # Deployment files
+    deploy/
+
+# Files to exclude by pattern
+per-file-ignores =
+    # Test files can have longer lines and unused imports
+    test_*.py:E501,F401,F811
+    *_test.py:E501,F401,F811
+    # __init__.py files can have unused imports
+    __init__.py:F401
+    # Configuration files
+    config.py:E501
+    # Database models can be longer
+    models/*.py:E501
+
+# Select specific error codes to check
+select = 
+    # Pyflakes errors
+    F,
+    # Pycodestyle errors
+    E,
+    # Pycodestyle warnings  
+    W,
+    # McCabe complexity
+    C
+
+# Show source code for each error
+show-source = True
+
+# Show pep8 statistics
+statistics = True
+
+# Count errors
+count = True

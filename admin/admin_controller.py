@@ -3,6 +3,7 @@ from database import db
 
 admin_bp = Blueprint("admin", __name__)
 
+
 @admin_bp.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":

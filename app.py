@@ -40,8 +40,8 @@ logger.info("Database tables created successfully")
 # Register blueprints
 app.register_blueprint(api_bp)
 app.register_blueprint(metrics_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(admin_products_bp)
+app.register_blueprint(admin_bp, name='admin_main')
+app.register_blueprint(admin_products_bp, name='admin_products_main')
 
 logger.info("All blueprints registered successfully")
 
@@ -141,7 +141,7 @@ def checkout():
 
         # Clear cart
         session["cart"] = {}
-        
+
         logger.info(f"Order {order_id} created successfully for customer {name}")
         return "Order placed successfully!"
 
@@ -171,8 +171,8 @@ if __name__ == '__main__':
     logger.info("Starting Agro Shop application")
     app.run(host='0.0.0.0', port=5000, debug=True)
 
+
 @app.route("/health")
 def health():
     logger.info("Health check accessed")
     return {"status": "ok"}, 200
-
