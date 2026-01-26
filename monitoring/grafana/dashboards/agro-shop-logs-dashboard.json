@@ -1,0 +1,113 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Agro Shop - Logs Dashboard",
+    "tags": ["agro-shop", "logs", "loki"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Log Volume by Level",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (level) (rate({job=\"agro-shop\"}[5m]))",
+            "legendFormat": "{{level}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Error Logs Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate({job=\"agro-shop\", level=\"ERROR\"}[5m]))",
+            "legendFormat": "Errors/sec"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.1},
+                {"color": "red", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Warning Logs Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate({job=\"agro-shop\", level=\"WARNING\"}[5m]))",
+            "legendFormat": "Warnings/sec"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Recent Error Logs",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"agro-shop\", level=\"ERROR\"}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+      },
+      {
+        "id": 5,
+        "title": "API Request Logs",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"agro-shop\"} |= \"API call\"",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "Database Operation Logs",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"agro-shop\"} |= \"database\" or \"SQL\"",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "Log Search",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"agro-shop\"}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 12, "w": 24, "x": 0, "y": 16}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  }
+}

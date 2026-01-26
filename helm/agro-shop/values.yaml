@@ -223,7 +223,11 @@ grafana:
   
   dashboards:
     default:
-      agro-shop-dashboard:
+      agro-shop-metrics:
+        file: dashboards/agro-shop-custom-dashboard.json
+      agro-shop-logs:
+        file: dashboards/agro-shop-logs-dashboard.json
+      system-overview:
         gnetId: 1860
         revision: 27
         datasource: Prometheus

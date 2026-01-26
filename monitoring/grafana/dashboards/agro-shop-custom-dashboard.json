@@ -1,0 +1,163 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Agro Shop - Application Metrics",
+    "tags": ["agro-shop", "flask", "custom"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(api_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}} - {{status}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "API Response Time Distribution",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(api_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(api_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "99th percentile"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "yAxes": [
+          {
+            "label": "Seconds",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Active Orders Count",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "active_orders_total",
+            "legendFormat": "Active Orders"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 50},
+                {"color": "red", "value": 100}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Products Count",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "products_count_total",
+            "legendFormat": "Products"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(api_requests_total{status=~\"4..|5..\"}[5m]) / rate(api_requests_total[5m]) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+        "yAxes": [
+          {
+            "label": "Percentage",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Top API Endpoints",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (endpoint, method) (rate(api_requests_total[5m])))",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "System Resources",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "system_cpu_usage_percent",
+            "legendFormat": "CPU Usage %"
+          },
+          {
+            "expr": "system_memory_usage_percent",
+            "legendFormat": "Memory Usage %"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yAxes": [
+          {
+            "label": "Percentage",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Database Operations",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(database_operations_total[5m])",
+            "legendFormat": "{{operation}} operations/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

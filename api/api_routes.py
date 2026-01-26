@@ -11,6 +11,14 @@ api_request_duration = Histogram('api_request_duration_seconds', 'API request du
 active_orders = Gauge('active_orders_total', 'Total active orders')
 products_count = Gauge('products_count_total', 'Total products count')
 
+# Custom business metrics
+database_operations_total = Counter('database_operations_total', 'Total database operations', ['operation', 'table'])
+order_value_histogram = Histogram('order_value_dollars', 'Order value distribution')
+user_sessions_active = Gauge('user_sessions_active', 'Active user sessions')
+cart_items_total = Counter('cart_items_total', 'Total items added to cart')
+checkout_success_total = Counter('checkout_success_total', 'Successful checkouts')
+checkout_failure_total = Counter('checkout_failure_total', 'Failed checkouts', ['reason'])
+
 # Setup logging for Loki
 logger = logging.getLogger('api')
 
@@ -51,6 +59,9 @@ def get_products():
     """Get all products"""
     conn = db()
     products = conn.execute("SELECT * FROM products").fetchall()
+    
+    # Track database operation
+    database_operations_total.labels(operation='SELECT', table='products').inc()
 
     # Update metrics
     products_count.set(len(products))
@@ -94,6 +105,9 @@ def create_product():
         (data['name'], float(data['price']))
     )
     conn.commit()
+    
+    # Track database operation
+    database_operations_total.labels(operation='INSERT', table='products').inc()
 
     return jsonify({
         "id": cursor.lastrowid,
@@ -230,9 +244,11 @@ def create_order():
 
     required_fields = ['customer_name', 'phone', 'address', 'items']
     if not data or not all(field in data for field in required_fields):
+        checkout_failure_total.labels(reason='missing_fields').inc()
         return jsonify({"error": "Required fields: customer_name, phone, address, items"}), 400
 
     if not data['items']:
+        checkout_failure_total.labels(reason='empty_cart').inc()
         return jsonify({"error": "Order must have at least one item"}), 400
 
     conn = db()
@@ -241,14 +257,19 @@ def create_order():
     # Calculate total and validate products
     for item in data['items']:
         if 'product_id' not in item or 'quantity' not in item:
+            checkout_failure_total.labels(reason='invalid_item_format').inc()
             return jsonify({"error": "Each item must have product_id and quantity"}), 400
 
         product = conn.execute("SELECT * FROM products WHERE id=?", (item['product_id'],)).fetchone()
         if not product:
+            checkout_failure_total.labels(reason='product_not_found').inc()
             return jsonify({"error": f"Product {item['product_id']} not found"}), 404
 
         subtotal = product['price'] * item['quantity']
         total += subtotal
+
+    # Track order value
+    order_value_histogram.observe(total)
 
     # Create order
     cursor = conn.execute("""
@@ -258,6 +279,9 @@ def create_order():
           datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
     order_id = cursor.lastrowid
+    
+    # Track database operations
+    database_operations_total.labels(operation='INSERT', table='orders').inc()
 
     # Create order items
     for item in data['items']:
@@ -268,8 +292,13 @@ def create_order():
             INSERT INTO order_items(order_id, product_name, quantity, price, subtotal)
             VALUES (?, ?, ?, ?, ?)
         """, (order_id, product['name'], item['quantity'], product['price'], subtotal))
+        
+        database_operations_total.labels(operation='INSERT', table='order_items').inc()
 
     conn.commit()
+    
+    # Track successful checkout
+    checkout_success_total.inc()
 
     return jsonify({
         "id": order_id,

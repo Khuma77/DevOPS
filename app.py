@@ -73,6 +73,15 @@ def add_to_cart(product_id):
     cart = session.get("cart", {})
     cart[str(product_id)] = cart.get(str(product_id), 0) + 1
     session["cart"] = cart
+    
+    # Track cart metrics (if monitoring is available)
+    if MONITORING_ENABLED:
+        try:
+            from api.api_routes import cart_items_total
+            cart_items_total.inc()
+        except ImportError:
+            pass
+    
     return redirect("/cart")
 
 

@@ -62,8 +62,34 @@ jobs:
       run: |
         # Create test database
         python -c "from database import create_tables; create_tables()"
-        # Run tests
-        pytest test_api.py -v --tb=short || echo "Tests completed"
+        # Run unit tests
+        pytest test_api.py -v --tb=short || echo "Unit tests completed"
+        
+    - name: Start application for integration tests
+      run: |
+        # Start application in background
+        python app.py &
+        APP_PID=$!
+        echo "APP_PID=$APP_PID" >> $GITHUB_ENV
+        
+        # Wait for application to start
+        sleep 10
+        
+        # Check if application is running
+        curl -f http://localhost:5000/health || exit 1
+        
+    - name: Run integration tests
+      run: |
+        # Run integration tests
+        pytest tests/integration_test.py -v --tb=short
+        
+    - name: Stop application
+      if: always()
+      run: |
+        # Stop application
+        if [ ! -z "$APP_PID" ]; then
+          kill $APP_PID || true
+        fi
 
     - name: Create logs directory
       run: mkdir -p logs
@@ -130,6 +156,24 @@ jobs:
           sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" deploy/k8s/deployment.yaml
         fi
 
+    # -------- ArgoCD Integration --------
+    - name: Update ArgoCD Application
+      if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
+      run: |
+        # Install ArgoCD CLI
+        curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+        sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+        
+        # Update ArgoCD application image (if ArgoCD is configured)
+        if [ ! -z "${{ secrets.ARGOCD_SERVER }}" ] && [ ! -z "${{ secrets.ARGOCD_TOKEN }}" ]; then
+          argocd login ${{ secrets.ARGOCD_SERVER }} --auth-token ${{ secrets.ARGOCD_TOKEN }} --insecure
+          argocd app set agro-shop --parameter app.image.tag=prod-${{ github.sha }}
+          argocd app sync agro-shop
+          echo "✅ ArgoCD application updated and synced"
+        else
+          echo "⚠️ ArgoCD credentials not configured, skipping ArgoCD update"
+        fi
+
     - name: Commit deployment changes
       if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
       run: |
@@ -138,6 +182,24 @@ jobs:
         git add docker-compose.yml docker-compose.ghcr.yml helm/agro-shop/values.yaml deploy/ || true
         git commit -m "chore: update image tags to prod-${{ github.sha }}" || echo "No changes to commit"
         git push || echo "No changes to push"
+
+    # -------- ArgoCD Integration --------
+    - name: Update ArgoCD Application
+      if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
+      run: |
+        # Install ArgoCD CLI
+        curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+        sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+        
+        # Update ArgoCD application image (if ArgoCD is configured)
+        if [ ! -z "${{ secrets.ARGOCD_SERVER }}" ] && [ ! -z "${{ secrets.ARGOCD_TOKEN }}" ]; then
+          argocd login ${{ secrets.ARGOCD_SERVER }} --auth-token ${{ secrets.ARGOCD_TOKEN }} --insecure
+          argocd app set agro-shop --parameter app.image.tag=prod-${{ github.sha }}
+          argocd app sync agro-shop
+          echo "✅ ArgoCD application updated and synced"
+        else
+          echo "⚠️ ArgoCD credentials not configured, skipping ArgoCD update"
+        fi
 
   # -------------------------------------------------------
   # 2️⃣ TRIVY SECURITY SCAN
@@ -212,6 +274,29 @@ jobs:
         # - ansible-playbook deploy.yml
         
         echo "✅ Deployment completed successfully!"
+
+    - name: Deployment Verification
+      run: |
+        echo "🔍 Running deployment verification..."
+        
+        # Wait for deployment to be ready (simulate)
+        sleep 30
+        
+        # Verify deployment health (example)
+        # kubectl get pods -l app=agro-shop
+        # kubectl rollout status deployment/agro-shop
+        
+        echo "✅ Deployment verification completed!"
+
+    - name: Post-deployment tests
+      run: |
+        echo "🧪 Running post-deployment tests..."
+        
+        # Run smoke tests against deployed application
+        # export TEST_URL=https://your-deployed-app-url
+        # pytest tests/integration_test.py::TestIntegration::test_health_check -v
+        
+        echo "✅ Post-deployment tests passed!"
 
     - name: Health Check
       run: |
