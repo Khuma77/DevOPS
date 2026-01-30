@@ -102,8 +102,9 @@ graph TB
 <img width="1220" height="726" alt="image" src="https://github.com/user-attachments/assets/ee1b32d0-a423-40bf-a754-472f8886f8a8" />
 - **Grafana** - Visualization and dashboards
 <img width="1229" height="750" alt="image" src="https://github.com/user-attachments/assets/219f055a-90cf-45e4-8645-0d2918b89c3b" />
-- **Loki** - Log aggregation and querying
-- **Promtail** - Log shipping agent
+- **Log**
+<img width="1220" height="750" alt="image" src="https://github.com/user-attachments/assets/95299189-876c-4277-8e1b-9cdd738f31ed" />
+
 
 ## Security & Quality
 - **Trivy** - Container vulnerability scanning
