@@ -198,13 +198,6 @@ jobs:
         
         echo "✅ Deployment completed successfully!"
 
-    - name: Health Check
-      run: |
-        echo "🔍 Running health check..."
-        # Add your health check logic here
-        # curl -f http://your-app-url/health || exit 1
-        echo "✅ Health check passed!"
-
   # -------------------------------------------------------
   # 4️⃣ NOTIFICATION
   # -------------------------------------------------------
