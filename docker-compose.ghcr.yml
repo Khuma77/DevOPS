@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Flask Application (using GitHub Container Registry)
   agro-shop:
-    image: ghcr.io/khuma77/agro-shop:prod-d90811e4c70d7262925ff4b266c7a2b01d8cca53
+    image: ghcr.io/khuma77/agro-shop:prod-aaa9c833c96b1c2aea4f786eec9f038480379d1b
     ports:
       - "5000:5000"
     volumes:
