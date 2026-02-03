@@ -2,9 +2,8 @@
 app:
   replicaCount: 3
   image:
-    repository: "REPLACE_WITH_DOCKERHUB_USERNAME/agro-shop"
-    tag: "prod-latest"
-  
+    repository: "mukhiddinov/agro-shop"
+    tag: "cf2877d"
   resources:
     limits:
       cpu: 500m
@@ -12,7 +11,6 @@ app:
     requests:
       cpu: 250m
       memory: 256Mi
-  
   ingress:
     hosts:
       - host: agro-shop.local
@@ -23,17 +21,14 @@ app:
       - secretName: agro-shop-prod-tls
         hosts:
           - agro-shop.local
-  
   env:
     - name: FLASK_ENV
       value: "production"
     - name: DATABASE_URL
       value: "sqlite:///data/agro-prod.db"
-  
   persistence:
     size: 5Gi
     storageClass: "fast-ssd"
-
 # Full monitoring stack in production
 prometheus:
   enabled: true
@@ -41,20 +36,16 @@ prometheus:
     persistentVolume:
       size: 20Gi
     retention: "30d"
-
 grafana:
   enabled: true
   persistence:
     size: 10Gi
-
 loki:
   enabled: true
   persistence:
     size: 10Gi
-
 promtail:
   enabled: true
-
 # Production HPA settings
 hpa:
   enabled: true
@@ -62,12 +53,10 @@ hpa:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
-
 # Enable PDB in production
 pdb:
   enabled: true
   minAvailable: 2
-
 # Enable network policies in production
 networkPolicy:
   enabled: true
