@@ -179,24 +179,6 @@ jobs:
           sed -i "s|image:.*agro-shop:.*|image: ghcr.io/${{ env.REPO_OWNER_LOWER }}/agro-shop:prod-${{ github.sha }}|g" deploy/k8s/deployment.yaml
         fi
 
-    # -------- ArgoCD Integration --------
-    - name: Update ArgoCD Application
-      if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
-      run: |
-        # Install ArgoCD CLI
-        curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-        sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
-        
-        # Update ArgoCD application image (if ArgoCD is configured)
-        if [ ! -z "${{ secrets.ARGOCD_SERVER }}" ] && [ ! -z "${{ secrets.ARGOCD_TOKEN }}" ]; then
-          argocd login ${{ secrets.ARGOCD_SERVER }} --auth-token ${{ secrets.ARGOCD_TOKEN }} --insecure
-          argocd app set agro-shop --parameter app.image.tag=prod-${{ github.sha }}
-          argocd app sync agro-shop
-          echo "✅ ArgoCD application updated and synced"
-        else
-          echo "⚠️ ArgoCD credentials not configured, skipping ArgoCD update"
-        fi
-
     - name: Commit deployment changes
       if: ${{ github.event.inputs.deploy == 'true' || github.ref == 'refs/heads/main' }}
       run: |
@@ -217,11 +199,24 @@ jobs:
         # Update ArgoCD application image (if ArgoCD is configured)
         if [ ! -z "${{ secrets.ARGOCD_SERVER }}" ] && [ ! -z "${{ secrets.ARGOCD_TOKEN }}" ]; then
           argocd login ${{ secrets.ARGOCD_SERVER }} --auth-token ${{ secrets.ARGOCD_TOKEN }} --insecure
-          argocd app set agro-shop --parameter app.image.tag=prod-${{ github.sha }}
-          argocd app sync agro-shop
-          echo "✅ ArgoCD application updated and synced"
+          
+          # Update different environments based on trigger
+          if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            argocd app set agro-shop-prod --parameter app.image.tag=prod-${{ github.sha }}
+            argocd app sync agro-shop-prod
+            echo "✅ Production ArgoCD application updated and synced"
+          elif [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            argocd app set agro-shop-staging --parameter app.image.tag=staging-${{ github.sha }}
+            argocd app sync agro-shop-staging
+            echo "✅ Staging ArgoCD application updated and synced"
+          else
+            argocd app set agro-shop-dev --parameter app.image.tag=dev-${{ github.sha }}
+            argocd app sync agro-shop-dev
+            echo "✅ Development ArgoCD application updated and synced"
+          fi
         else
           echo "⚠️ ArgoCD credentials not configured, skipping ArgoCD update"
+          echo "💡 To enable ArgoCD integration, set ARGOCD_SERVER and ARGOCD_TOKEN secrets"
         fi
 
   # -------------------------------------------------------
@@ -315,18 +310,41 @@ jobs:
       run: |
         echo "🧪 Running post-deployment tests..."
         
-        # Run smoke tests against deployed application
-        # export TEST_URL=https://your-deployed-app-url
-        # pytest tests/integration_test.py::TestIntegration::test_health_check -v
+        # Install Python dependencies for verification script
+        pip install requests aiohttp
         
-        echo "✅ Post-deployment tests passed!"
+        # Run comprehensive deployment verification
+        python deploy/scripts/verify-deployment.py --url http://localhost:5000 --timeout 60
+        
+        # Run performance tests
+        python tests/performance_test.py --url http://localhost:5000 --quick
+        
+        echo "✅ Post-deployment tests completed!"
+
+    - name: Create deployment backup
+      if: ${{ github.event.inputs.environment == 'prod' }}
+      run: |
+        echo "💾 Creating deployment backup..."
+        
+        # Make backup script executable
+        chmod +x deploy/scripts/backup-restore.sh
+        
+        # Create backup before production deployment
+        ./deploy/scripts/backup-restore.sh backup-local
+        
+        echo "✅ Deployment backup created!"
 
     - name: Health Check
       run: |
-        echo "🔍 Running health check..."
-        # Add your health check logic here
-        # curl -f http://your-app-url/health || exit 1
-        echo "✅ Health check passed!"
+        echo "🔍 Running comprehensive health check..."
+        
+        # Wait for application to be fully ready
+        sleep 10
+        
+        # Run deployment verification
+        python deploy/scripts/verify-deployment.py --url http://localhost:5000
+        
+        echo "✅ Health check completed!"
 
   # -------------------------------------------------------
   # 4️⃣ NOTIFICATION
