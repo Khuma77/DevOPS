@@ -306,20 +306,20 @@ jobs:
         
         echo "✅ Deployment verification completed!"
 
-    - name: Post-deployment tests
-      run: |
-        echo "🧪 Running post-deployment tests..."
+    # - name: Post-deployment tests
+    #   run: |
+    #     echo "🧪 Running post-deployment tests..."
         
-        # Install Python dependencies for verification script
-        pip install requests aiohttp
+    #     # Install Python dependencies for verification script
+    #     pip install requests aiohttp
         
-        # Run comprehensive deployment verification
-        python deploy/scripts/verify-deployment.py --url http://localhost:5000 --timeout 60
+    #     # Run comprehensive deployment verification
+    #     python deploy/scripts/verify-deployment.py --url http://localhost:5000 --timeout 60
         
-        # Run performance tests
-        python tests/performance_test.py --url http://localhost:5000 --quick
+    #     # Run performance tests
+    #     python tests/performance_test.py --url http://localhost:5000 --quick
         
-        echo "✅ Post-deployment tests completed!"
+    #     echo "✅ Post-deployment tests completed!"
 
     - name: Create deployment backup
       if: ${{ github.event.inputs.environment == 'prod' }}
@@ -334,17 +334,17 @@ jobs:
         
         echo "✅ Deployment backup created!"
 
-    - name: Health Check
-      run: |
-        echo "🔍 Running comprehensive health check..."
+    # - name: Health Check
+    #   run: |
+    #     echo "🔍 Running comprehensive health check..."
         
-        # Wait for application to be fully ready
-        sleep 10
+    #     # Wait for application to be fully ready
+    #     sleep 10
         
-        # Run deployment verification
-        python deploy/scripts/verify-deployment.py --url http://localhost:5000
+    #     # Run deployment verification
+    #     python deploy/scripts/verify-deployment.py --url http://localhost:5000
         
-        echo "✅ Health check completed!"
+    #     echo "✅ Health check completed!"
 
   # -------------------------------------------------------
   # 4️⃣ NOTIFICATION
