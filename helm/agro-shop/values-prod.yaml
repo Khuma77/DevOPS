@@ -2,6 +2,7 @@
 app:
   replicaCount: 3
   image:
+    repository: "REPLACE_WITH_DOCKERHUB_USERNAME/agro-shop"
     tag: "prod-latest"
   
   resources:
@@ -28,6 +29,10 @@ app:
       value: "production"
     - name: DATABASE_URL
       value: "sqlite:///data/agro-prod.db"
+  
+  persistence:
+    size: 5Gi
+    storageClass: "fast-ssd"
 
 # Full monitoring stack in production
 prometheus:
@@ -66,9 +71,3 @@ pdb:
 # Enable network policies in production
 networkPolicy:
   enabled: true
-
-# Production persistence
-app:
-  persistence:
-    size: 5Gi
-    storageClass: "fast-ssd"
