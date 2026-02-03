@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: agro-shop-prod
+  namespace: argocd
+  annotations:
+    # ArgoCD Image Updater settings (Docker Hub)
+    argocd-image-updater.argoproj.io/image-list: |
+      agroshop=mukhiddinov/agro-shop
+    argocd-image-updater.argoproj.io/update-strategy: latest
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/force-update: "true"
+    argocd-image-updater.argoproj.io/agroshop.allow-tags: regexp:^latest$
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Khuma77/DevOPS.git
+    targetRevision: main
+    path: helm/agro-shop
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: agro-shop-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true

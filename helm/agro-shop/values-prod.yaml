@@ -1,7 +1,9 @@
-# Production environment values
+# Production environment values (Docker Hub)
+
 app:
-  replicaCount: 3
+  replicaCount: 1
   image:
+<<<<<<< HEAD
     repository: "mukhiddinov/agro-shop"
     tag: "cf2877d"
   resources:
@@ -11,6 +13,26 @@ app:
     requests:
       cpu: 250m
       memory: 256Mi
+=======
+    # ✅ Docker Hub repo
+    repository: "mukhiddinov/agro-shop"
+    # ✅ Image Updater latest’ni kuzatadi
+    tag: "latest"
+    pullPolicy: Always
+
+  env:
+    - name: FLASK_ENV
+      value: "production"
+    # ✅ persistence mountPath = /app/data
+    - name: DATABASE_URL
+      value: "sqlite:////app/data/agro-prod.db"
+
+  persistence:
+    size: 5Gi
+    # ⚠️ Agar cluster’da fast-ssd bo‘lmasa, bo‘sh qoldiring
+    storageClass: ""
+
+>>>>>>> 57fbf07 (fix: update helm values)
   ingress:
     hosts:
       - host: agro-shop.local
@@ -21,6 +43,7 @@ app:
       - secretName: agro-shop-prod-tls
         hosts:
           - agro-shop.local
+<<<<<<< HEAD
   env:
     - name: FLASK_ENV
       value: "production"
@@ -30,6 +53,10 @@ app:
     size: 5Gi
     storageClass: "fast-ssd"
 # Full monitoring stack in production
+=======
+
+# Monitoring stack in production
+>>>>>>> 57fbf07 (fix: update helm values)
 prometheus:
   enabled: true
   server:
@@ -46,17 +73,31 @@ loki:
     size: 10Gi
 promtail:
   enabled: true
+<<<<<<< HEAD
+=======
+
+# ✅ Agar Prometheus Operator (CRDs) sizda BOR bo‘lsa true qiling
+# Aks holda false qoldiring, bo‘lmasa ArgoCD sync yiqiladi.
+serviceMonitor:
+  enabled: false
+
+>>>>>>> 57fbf07 (fix: update helm values)
 # Production HPA settings
 hpa:
   enabled: true
-  minReplicas: 3
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 3
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
 # Enable PDB in production
 pdb:
   enabled: true
   minAvailable: 2
+<<<<<<< HEAD
 # Enable network policies in production
+=======
+
+# Enable network policies in production (xohlasangiz)
+>>>>>>> 57fbf07 (fix: update helm values)
 networkPolicy:
   enabled: true
